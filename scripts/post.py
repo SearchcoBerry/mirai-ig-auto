@@ -54,7 +54,7 @@ def wait_ready(container_id, tries=20, wait=5):
 
 def main():
     posts = json.load(open(QUEUE, encoding="utf-8"))
-    remaining = [p for p in posts if not p.get("posted_at")]
+    remaining = [p for p in posts if not p.get("posted_at") and not p.get("hold")]
     if not remaining:
         print("::error::queue.json に未投稿の投稿がありません。次の投稿を追加してください。")
         return 1
@@ -97,7 +97,7 @@ def main():
         json.dump(posts, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
-    left = len([p for p in posts if not p.get("posted_at")])
+    left = len([p for p in posts if not p.get("posted_at") and not p.get("hold")])
     print(f"残り: {left}件")
     if left == 0:
         print("::warning::これが最後の投稿でした。次の投稿を追加してください。")
