@@ -59,6 +59,13 @@ def main():
         print("::error::queue.json に未投稿の投稿がありません。次の投稿を追加してください。")
         return 1
 
+    # 予約実行が複数回起動しても、1日1件だけ投稿する
+    today = time.strftime("%Y-%m-%d", time.gmtime(time.time() + 9 * 3600))
+    posted_today = [p for p in posts if str(p.get("posted_at") or "").startswith(today)]
+    if posted_today and os.environ.get("FORCE", "").lower() != "true":
+        print(f"今日（{today}）はすでに投稿済みです: {posted_today[-1]['id']} {posted_today[-1]['title']}")
+        return 0
+
     post = remaining[0]
     urls = [f"{BASE_URL}/{name}" for name in post["images"]]
     print(f"投稿: {post['id']} {post['title']}")
@@ -91,7 +98,7 @@ def main():
     published = call(f"{USER_ID}/media_publish", {"creation_id": parent["id"]}, "POST")
     print(f"公開しました: media_id={published['id']}")
 
-    post["posted_at"] = time.strftime("%Y-%m-%dT%H:%M:%S+09:00", time.localtime(time.time() + 9 * 3600))
+    post["posted_at"] = time.strftime("%Y-%m-%dT%H:%M:%S+09:00", time.gmtime(time.time() + 9 * 3600))
     post["media_id"] = published["id"]
     with open(QUEUE, "w", encoding="utf-8") as f:
         json.dump(posts, f, ensure_ascii=False, indent=2)
